@@ -34,7 +34,7 @@ class Player(Character):
         super().__init__(login, password, location, hp)
 
     def move(self):
-        print("Znajdujesz się w %s." % self.location.name[4])  # (client)
+        print(self.location.description)  # (client)
 
         command = unpolish(input("Co robisz? ")).split()
         if command[0] == "idz":
@@ -60,8 +60,9 @@ class Player(Character):
 
 
 class Location:
-    def __init__(self, name):
+    def __init__(self, name, description):
         self.name = name
+        self.description = description
         self.neighbours = []
         self.objects = []
         self.characters = []
@@ -79,10 +80,11 @@ class Word:
 
 if __name__ == "__main__":
     idC = 0
-    las = Location(["las", "lasu", "lasowi", "las", "lesie"])
-    glaz = Location(["głaz", "głazu", "głazowi", "głaz", "głazie"])
+    las = Location("las", "Znajdujesz się w ciemnym, ponurym lesie.")
+    glaz = Location("głaz", "Znajdujesz się w szarym, ponurym głazie.")
     jon = Player("potWilk", "1234", las, 14)
     las.characters.append(jon.cid)
+    las.neighbours.append(unpolish(glaz.name))
     clare = Player("ccl23", "5678", glaz, 10)
     glaz.characters.append(clare.cid)
     a = "idz glaz"
