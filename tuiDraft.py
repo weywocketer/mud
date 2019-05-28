@@ -9,7 +9,7 @@ class Thread1(threading.Thread):
         '''
         for i in range(10):
             print("thread 1: i = " + str(i))
-            time.sleep(1)
+            time.sleep(1)s
         '''
 
 class Thread2(threading.Thread):
