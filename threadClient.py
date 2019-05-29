@@ -10,9 +10,10 @@ tcpClientA = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpClientA.connect((host, port))
 
 while MESSAGE != 'exit':
-    tcpClientA.send(MESSAGE.encode())
+    #tcpClientA.send(MESSAGE.encode())
+    print("se czekam")
     data = tcpClientA.recv(BUFFER_SIZE)
-    print(" Client2 received data:", data)
-    MESSAGE = input("tcpClientA: Enter message to continue/ Enter exit:")
+    print("Client received data:", data.decode())
+    #MESSAGE = input("tcpClientA: Enter message to continue/ Enter exit:")
 
 tcpClientA.close()
