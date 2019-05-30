@@ -97,7 +97,6 @@ class ClientThread(threading.Thread):
 
     def __init__(self, ip, port, conn):
         threading.Thread.__init__(self)
-        self.i = random.random()
         self.ip = ip
         self.port = port
         self.conn = conn
@@ -119,9 +118,9 @@ class ClientThread(threading.Thread):
         self.bind_player(new_player)
         self.conn.sendall(b"0")  # player successfully created
 
-
         for player in players:
             print(player.login)
+
 
     def login(self):
         login_data = self.conn.recv(4096).decode().split()
@@ -150,14 +149,52 @@ class ClientThread(threading.Thread):
                 self.login()
 
         while True:
-            pass
+            self.conn.sendall("You are playing a game. Fun!".encode())
+            print(commands)
+            time.sleep(2)
 
-            #time.sleep(2)
             #self.conn.sendall(str("a").encode())
 
 
 
+class ClientCommandsThread(threading.Thread):
 
+    def __init__(self, ip, port, conn):
+        threading.Thread.__init__(self)
+        self.ip = ip
+        self.port = port
+        self.conn = conn
+        self.player = Player("", "", None, 0)
+        print("Second channel created. IP = {} PORT = {}".format(self.ip, self.port))
+
+    def run(self):
+        while True:
+            print("{}: Waiting for commands...".format(self))
+            command = self.conn.recv(4096).decode()
+            print("New command arrived.")
+            commands.append(command)
+
+
+class ListenForSecondConn(threading.Thread):
+    def run(self):
+        server_ip2 = '127.0.0.1'
+        server_port2 = 2005
+
+        server2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # server2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server2.bind((server_ip2, server_port2))
+        threads2 = []
+        server2.listen(4)
+
+        while True:
+            print("Waiting for second connections...")
+            (conn2, (ip2, port2)) = server2.accept()
+            new_thread2 = ClientCommandsThread(ip2, port2, conn2)
+            new_thread2.start()
+            threads2.append(new_thread)
+
+
+#-----------------main code here--------------------------------------
 
 players = PlayerList()
 idC = 0
@@ -174,6 +211,10 @@ a = "idz glaz"
 location_dict = {"las": las, "glaz": glaz}  # tymczasowo słownik
 
 
+commands = ["potWilk idz glaz"]
+
+
+ListenForSecondConn().start()
 server_ip = '127.0.0.1'
 server_port = 2004
 BUFFER_SIZE = 20  # Usually 1024, but we need quick response

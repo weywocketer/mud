@@ -4,7 +4,7 @@ import threading
 
 class Thread1(threading.Thread):
     def run(self):
-        runTUI()
+        TestApp.run()
 
         '''
         for i in range(10):
@@ -38,8 +38,6 @@ class Thread2(threading.Thread):
             time.sleep(1)
 
 
-def runTUI():
-    TestApp.run()
 
 class myEmployeeForm(npyscreen.Form):
     def create(self):
