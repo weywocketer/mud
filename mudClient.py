@@ -35,12 +35,12 @@ class CommandsThread(threading.Thread):
         client2.connect((ip, port + 1))
 
         while True:
-            command = input(">: ").encode()
-            print("Command sent.")
+            command = (login + " " + input(">: ")).encode()
             client2.sendall(command)
+            print("Command sent.")
 
 
-MyApplication().run()
+#MyApplication().run()
 
 print("Welcome to MUD Mud v0.1. It's great to see you! Have fun.")
 # ip = input("Enter your's server IP address: ")

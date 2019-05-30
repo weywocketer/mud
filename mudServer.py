@@ -35,10 +35,11 @@ class Character:
 
 
 class Player(Character):
+
     def __init__(self, login, password, location, hp):
         super().__init__(login, password, location, hp)
 
-    def move(self):
+    def do_command(self):
         print(self.location.description)  # (client)
 
         command = unpolish(input("Co robisz? ")).split()
@@ -63,6 +64,13 @@ class Player(Character):
         elif command[0] == "":
             pass
 
+    def move(self, location):
+        if location in self.location.neighbours:
+            self.location.characters.remove(self.cid)
+            self.location = get_location(location)
+            self.location.characters.append(self.cid)
+
+    command_dict = {"move": move}
 
 class Npc(Character):
     pass
@@ -90,11 +98,17 @@ class PlayerList(list):
         else:
             return False
 
+    def get_player(self, login):
+        for player in self:
+            if player.login == login:
+                return player
+
 
 def get_location(name):
-    for i in location_list:
+    for i in locationList:
         if i.name == name:
             return i
+
 
 
 #--------------networking section here---------------------
@@ -117,20 +131,20 @@ class ClientThread(threading.Thread):
         login = register_data[0]
         password = register_data[1]
         # TODO: verify whether login not used before
-        new_player = Player(login, password, random.choice(location_list), 10)
-        players.append(new_player)
+        new_player = Player(login, password, random.choice(locationList), 10)
+        playerList.append(new_player)
         self.bind_player(new_player)
         self.conn.sendall(b"0")  # player successfully created
 
-        for player in players:
+        for player in playerList:
             print(player.login)
 
     def login(self):
         login_data = self.conn.recv(4096).decode().split()
         login = login_data[0]
         password = login_data[1]
-        if login in players:
-            for player in players:
+        if login in playerList:
+            for player in playerList:
                 if player.login == login:
                     if player.password == password:
                         for thread in threads:  # check if someone is using this account
@@ -152,7 +166,7 @@ class ClientThread(threading.Thread):
 
         while True:
             self.conn.sendall(b"You are playing a game. Fun!")
-            print(commands)
+            print(commandList)
             time.sleep(2)
 
             #self.conn.sendall(str("a").encode())
@@ -173,7 +187,7 @@ class ClientCommandsThread(threading.Thread):
             print("{}: Waiting for commands...".format(self))
             command = self.conn.recv(4096).decode()
             print("New command arrived.")
-            commands.append(command)
+            commandList.append(command)
 
 
 class ListenForSecondConn(threading.Thread):
@@ -194,10 +208,21 @@ class ListenForSecondConn(threading.Thread):
             new_thread2.start()
             threads2.append(new_thread2)
 
+class ApplyCommands(threading.Thread):
+    def run(self, commandList):
+        for i in range(len(commandList)):
+            command = commandList[i].split()
+            player = playerList.get_player(command[0])
+            player.Player.command_dict[command[1]](command[2:])
+            commandList = []  # !!! czy to na pewno czyści zmięnną z maina?
+
+
+
+
 
 #-----------------main code here--------------------------------------
 
-players = PlayerList()
+playerList = PlayerList()
 
 locations = open("g.csv").readlines()  # load csv file with locations (tab used as separator!)
 for i in range(len(locations)):
@@ -205,26 +230,26 @@ for i in range(len(locations)):
     locations[i] = locations[i].split("\t")
     locations[i][2] = locations[i][2].split(",")
 
-location_list = []
+locationList = []
 
 for location in locations:
-    location_list.append(Location(location[0], location[1], location[2]))
+    locationList.append(Location(location[0], location[1], location[2]))
 
 
 idC = 0
 #las = Location("las", "Znajdujesz się w ciemnym, ponurym lesie.")
 #glaz = Location("głaz", "Znajdujesz się w szarym, ponurym głazie.")
-jon = Player("potWilk", "1234", random.choice(location_list), 14)
-players.append(jon)
+jon = Player("potWilk", "1234", random.choice(locationList), 14)
+playerList.append(jon)
 jon.location.characters.append(jon.cid) # trza to ogarnąć lepiej
-clare = Player("ccl23", "5678", random.choice(location_list), 10)
-players.append(clare)
+clare = Player("ccl23", "5678", random.choice(locationList), 10)
+playerList.append(clare)
 clare.location.characters.append(clare.cid)
 
 
-commands = ["potWilk idz glaz"]
+commandList = ["potWilk idz glaz"]
 
-'''
+
 ListenForSecondConn().start()
 server_ip = '127.0.0.1'
 server_port = 2004
@@ -245,10 +270,10 @@ while True:
 
     
     threads.append(new_thread)
-    for player in players:
+    for player in playerList:
         print(player.login)
 
-'''
+
 '''    
 import json
 
