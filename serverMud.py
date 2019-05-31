@@ -5,21 +5,11 @@ Created on Sat Apr 27 10:23:11 2019
 
 @author: weywocketer
 """
-import unidecode
+
 import threading
 import random
 import time
 import socket
-
-
-def unpolish(word):
-    """
-    replace polish symbols with universal ones and go lowercase
-    """
-
-    word = word.lower()
-    word = unidecode.unidecode(word)  # remove accents
-    return word
 
 
 class Character:
@@ -41,30 +31,6 @@ class Player(Character):
 
     def do_command(self):
         pass
-
-        '''print(self.location.description)  # (client)
-
-        command = unpolish(input("Co robisz? ")).split()
-        if command[0] == "idz":
-            if command[1] in self.location.neighbours:
-                self.location.characters.remove(self.cid)  # server
-                self.location = get_location(command[1])
-                self.location.characters.append(self.cid)
-            else:
-                print("To niemożliwe!")
-        elif command[0] == "uzyj":
-            print("użyto")
-            pass
-        elif command[0] == "patrz":
-            pass
-        elif command[0] == "rozmawiaj":
-            pass
-        elif command[0] == "zaatakuj":
-            pass
-        elif command[0] == "wez":
-            pass
-        elif command[0] == "":
-            pass'''
 
     def move(self, location):
         location = location[0]
@@ -116,8 +82,7 @@ def get_location(name):
             return i
 
 
-
-#--------------networking section here---------------------
+# --------------networking section here---------------------
 
 class ClientThread(threading.Thread):
 
@@ -176,7 +141,6 @@ class ClientThread(threading.Thread):
             print(commandList)
             time.sleep(2)
 
-            #self.conn.sendall(str("a").encode())
 
 
 class ClientCommandsThread(threading.Thread):
@@ -215,6 +179,7 @@ class ListenForSecondConn(threading.Thread):
             new_thread2.start()
             threads2.append(new_thread2)
 
+
 class ApplyCommands(threading.Thread):
 
     def run(self):
@@ -237,10 +202,7 @@ class ApplyCommands(threading.Thread):
             time.sleep(5)
 
 
-
-
-
-#-----------------main code here--------------------------------------
+# -----------------main code here--------------------------------------
 
 playerList = PlayerList()
 
@@ -251,34 +213,21 @@ for i in range(len(locations)):
     locations[i][2] = locations[i][2].split(",")
 
 locationList = []
+commandList = []
+
 
 for location in locations:
     locationList.append(Location(location[0], location[1], location[2]))
-
-
-idC = 0
-#las = Location("las", "Znajdujesz się w ciemnym, ponurym lesie.")
-#glaz = Location("głaz", "Znajdujesz się w szarym, ponurym głazie.")
-jon = Player("potWilk", "1234", random.choice(locationList), 14)
-playerList.append(jon)
-jon.location.characters.append(jon.cid) # trza to ogarnąć lepiej
-clare = Player("ccl23", "5678", random.choice(locationList), 10)
-playerList.append(clare)
-clare.location.characters.append(clare.cid)
-
-
-commandList = ["potWilk move path"]
-
 
 ListenForSecondConn().start()
 ApplyCommands().start()
 
 server_ip = '127.0.0.1'
 server_port = 2004
-BUFFER_SIZE = 20  # Usually 1024, but we need quick response
+BUFFER_SIZE = 20
 
 tcpServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+# tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcpServer.bind((server_ip, server_port))
 threads = []
 tcpServer.listen(4)
@@ -290,7 +239,6 @@ while True:
     new_thread = ClientThread(ip, port, conn)
     new_thread.start()
 
-    
     threads.append(new_thread)
     for player in playerList:
         print(player.login)

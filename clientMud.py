@@ -55,10 +55,6 @@ class CommandsThread(threading.Thread):
 
 myApp = MyApplication()
 
-#print(myApp.getForm('MAIN'))
-
-#myApp.getForm('MAIN').myName.value = "pies"
-
 
 print("Welcome to MUD Mud v0.1. It's great to see you! Have fun.")
 # ip = input("Enter your's server IP address: ")
@@ -69,7 +65,7 @@ print("Connecting to the server...")
 
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# try:
+
 clientSocket.connect((ip, port))
 
 while True:
@@ -109,17 +105,7 @@ client2.connect((ip, port + 1))
 
 TuiThread().start()
 time.sleep(1)
-#Thread2().start()
 
-#myApp.switchForm()
-
-#CommandsThread().start()  # tu tworzy się drugi wątek (do wysyłania komend)
-
-
-#myApp.getForm('MAIN').myName.value = login
-#myApp.getForm('MAIN').display()
-
-#myApp.getForm('MAIN').user_input.when_value_edited = a()
 
 while True:  # główny wątek nasłuchuje wiadomości odświeżających od serwera (i wyświetla co trzeba)
 
@@ -129,8 +115,3 @@ while True:  # główny wątek nasłuchuje wiadomości odświeżających od serw
     #print(data)
 
 
-
-clientSocket.close()
-
-# except:
-#   print("lipa")
