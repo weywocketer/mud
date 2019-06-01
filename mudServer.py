@@ -66,14 +66,19 @@ class Player(Character):
         elif command[0] == "":
             pass'''
 
-    def move(self, location):
-        location = location[0]
+    def move(self, command):
+        location = command[0]
+        for i in range(1, len(command)):
+            location = location + " " + command[i]
+
         print("you moved from {}".format(self.location.name))
         if location in self.location.neighbours:
             self.location.characters.remove(self.cid)
             self.location = get_location(location)
             self.location.characters.append(self.cid)
-            print("you moved2")
+            print("you moved to {}".format(self.location.name))
+        else:
+            print('{}, {}, {}'.format(self.login, self.location.name, self.location.neighbours))
 
     command_dict = {"move": move}
 
@@ -120,6 +125,9 @@ def get_location(name):
 #--------------networking section here---------------------
 
 class ClientThread(threading.Thread):
+    '''
+    Main client thread. Allows user to log in (or register). Sends to a client all data to be displayed.
+    '''
 
     def __init__(self, ip, port, conn):
         threading.Thread.__init__(self)
@@ -172,8 +180,17 @@ class ClientThread(threading.Thread):
                 self.login()
 
         while True:
-            self.conn.sendall(self.player.location.description.encode())
-            print(commandList)
+            sendData.wait()
+
+            neighbours = ""
+            for i in self.player.location.neighbours:
+                neighbours = neighbours + " " + i
+
+            message = "{}\t{}\t{}".format(self.player.location.name,
+                                          neighbours,
+                                          self.player.location.description)
+
+            self.conn.sendall(message.encode())
             time.sleep(2)
 
             #self.conn.sendall(str("a").encode())
@@ -190,11 +207,16 @@ class ClientCommandsThread(threading.Thread):
         print("Second channel created. IP = {} PORT = {}".format(self.ip, self.port))
 
     def run(self):
+        global commandList
+        commandBuffer = []
         while True:
             print("{}: Waiting for commands...".format(self))
-            command = self.conn.recv(4096).decode()
+            commandBuffer.append(self.conn.recv(4096).decode())
             print("New command arrived.")
-            commandList.append(command)
+            # can I modify commandList?
+            addCommands.wait()
+            commandList += commandBuffer
+            commandBuffer = []
 
 
 class ListenForSecondConn(threading.Thread):
@@ -220,21 +242,27 @@ class ApplyCommands(threading.Thread):
     def run(self):
         global commandList
         while True:
-            print("Parsing commands...")
 
-            for i in range(len(commandList)):
+            addCommands.clear()
+            print("Parsing commands...")
+            for i in range(len(commandList)):  # new commands should not be added when this for is running!
+                print("command {}. is being analysed... ".format(i))
                 command = commandList[i].split()
                 player = playerList.get_player(command[0])
-                print("command for " + player.login)
+
                 try:
-                    a = getattr(player, command[1])
+                    a = getattr(player, command[1])  # find player's method corresponding to command
                     a(command[2:])  # remember - arguments are sent as list - even if only one is left!
                 except:
                     print("invalid command!")
-                commandList = []
+            commandList = []
 
-            print("commands = {}".format(commandList))
-            time.sleep(5)
+            addCommands.set()
+            sendData.set()
+            time.sleep(1)
+            sendData.clear()
+
+            time.sleep(4)
 
 
 
@@ -244,7 +272,7 @@ class ApplyCommands(threading.Thread):
 
 playerList = PlayerList()
 
-locations = open("g.csv").readlines()  # load csv file with locations (tab used as separator!)
+locations = open("locations.csv").readlines()  # load csv file with locations (tab used as separator!)
 for i in range(len(locations)):
     locations[i] = locations[i].replace("\n", "")
     locations[i] = locations[i].split("\t")
@@ -256,9 +284,6 @@ for location in locations:
     locationList.append(Location(location[0], location[1], location[2]))
 
 
-idC = 0
-#las = Location("las", "Znajdujesz się w ciemnym, ponurym lesie.")
-#glaz = Location("głaz", "Znajdujesz się w szarym, ponurym głazie.")
 jon = Player("potWilk", "1234", random.choice(locationList), 14)
 playerList.append(jon)
 jon.location.characters.append(jon.cid) # trza to ogarnąć lepiej
@@ -266,9 +291,11 @@ clare = Player("ccl23", "5678", random.choice(locationList), 10)
 playerList.append(clare)
 clare.location.characters.append(clare.cid)
 
+commandList = []
 
-commandList = ["potWilk move path"]
-
+#a = threading.Condition()
+addCommands = threading.Event()  # used to ensure that new commands won't be added to list during commands' analysis
+sendData = threading.Event() # used to synchronize sending of updates to clients
 
 ListenForSecondConn().start()
 ApplyCommands().start()

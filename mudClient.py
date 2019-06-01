@@ -9,23 +9,50 @@ class TuiThread(threading.Thread):
     def run(self):
         myApp.run()
 
+
+
 class MyFormBaseNew(npyscreen.FormBaseNew):  # my subclass of FormBaseNew
     def while_editing(self, *args, **keywords):
         myApp.getForm('MAIN').mainPager.values.append(myApp.getForm('MAIN').user_input.value)
+        myApp.getForm('MAIN').mainPager.h_scroll_line_down(None)
         myApp.getForm('MAIN').mainPager.display()
         client2.sendall( (login + " " + myApp.getForm('MAIN').user_input.value).encode())
+        myApp.getForm('MAIN').user_input.value = ""
+
+#npyscreen.Form.set_editing()
+
+'''
+class MyTextfield(npyscreen.Textfield):
+    def o
+        myApp.getForm('MAIN').mainPager.values.append(myApp.getForm('MAIN').user_input.value)
+        myApp.getForm('MAIN').mainPager.h_scroll_line_down(None)
+        myApp.getForm('MAIN').mainPager.display()
+        client2.sendall( (login + " " + myApp.getForm('MAIN').user_input.value).encode())
+'''
 
 class LoggingScreen(MyFormBaseNew):
     def create(self):
-        self.mainPager = self.add(npyscreen.Pager, name='myPager', max_height=25, editable=True,
+        self.login = self.add(npyscreen.TitleText, name='Name:', editable=False, value=login)
+        self.nextrely += 1
+        self.mainPager = self.add(npyscreen.Pager, max_height=30,
                                values=["Welcome to MUD Mud v0.1. It's great to see you! Have fun.",
-                                       "Connecting to the server..."])
-        self.myName = self.add(npyscreen.TitleText, name='Name', editable=False, value=login)
-        self.user_input = self.add(npyscreen.Textfield, value="...")
+                                       "Connecting to the server..."], editable=False)
+        self.nextrely += 1
+        self.location = self.add(npyscreen.TitleText, name='Location:', editable=False)
+        self.players = self.add(npyscreen.TitleText, name='In:', editable=False)
+        self.neighbours = self.add(npyscreen.TitleText, name='Adjacent:', editable=False)
+        self.nextrely += 1
+        self.description = self.add(npyscreen.Pager, max_height=3, editable=False)
+        self.nextrely += 1
+        self.user_input = self.add(npyscreen.Textfield)
+
+        self.set_editing(self.user_input)
 
     def afterEditing(self):
         self.parentApp.setNextForm(None)
 
+
+#npyscreen.NPSAppManaged.
 
 class MyApplication(npyscreen.NPSAppManaged):
     def onStart(self):
@@ -54,10 +81,6 @@ class CommandsThread(threading.Thread):
 
 
 myApp = MyApplication()
-
-#print(myApp.getForm('MAIN'))
-
-#myApp.getForm('MAIN').myName.value = "pies"
 
 
 print("Welcome to MUD Mud v0.1. It's great to see you! Have fun.")
@@ -116,21 +139,21 @@ time.sleep(1)
 #CommandsThread().start()  # tu tworzy się drugi wątek (do wysyłania komend)
 
 
-#myApp.getForm('MAIN').myName.value = login
-#myApp.getForm('MAIN').display()
-
-#myApp.getForm('MAIN').user_input.when_value_edited = a()
-
 while True:  # główny wątek nasłuchuje wiadomości odświeżających od serwera (i wyświetla co trzeba)
 
-    data = clientSocket.recv(4096).decode()
-    myApp.getForm('MAIN').mainPager.values.append(data)
-    myApp.getForm('MAIN').mainPager.display()  # refresh display
-    #print(data)
+    message = clientSocket.recv(4096).decode()
+    myApp.getForm('MAIN').mainPager.values.append("something happens... {}".format(message))
+    message = message.split("\t")
+    myApp.getForm('MAIN').mainPager.h_scroll_line_down(None)  # scroll down one line
+    myApp.getForm('MAIN').location.value = message[0]
+    myApp.getForm('MAIN').neighbours.value = message[1]
+    myApp.getForm('MAIN').description.values = [message[2]]
+
+    myApp.getForm('MAIN').display()  # refresh display
+
+
+
 
 
 
 clientSocket.close()
-
-# except:
-#   print("lipa")
