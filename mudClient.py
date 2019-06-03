@@ -13,9 +13,6 @@ class TuiThread(threading.Thread):
 
 class MyFormBaseNew(npyscreen.FormBaseNew):  # my subclass of FormBaseNew
     def while_editing(self, *args, **keywords):
-        myApp.getForm('MAIN').mainPager.values.append(myApp.getForm('MAIN').user_input.value)
-        myApp.getForm('MAIN').mainPager.h_scroll_line_down(None)
-        myApp.getForm('MAIN').mainPager.display()
         client2.sendall( (login + " " + myApp.getForm('MAIN').user_input.value).encode())
         myApp.getForm('MAIN').user_input.value = ""
 
@@ -39,7 +36,7 @@ class LoggingScreen(MyFormBaseNew):
                                        "Connecting to the server..."], editable=False)
         self.nextrely += 1
         self.location = self.add(npyscreen.TitleText, name='Location:', editable=False)
-        self.players = self.add(npyscreen.TitleText, name='In:', editable=False)
+        self.characters = self.add(npyscreen.TitleText, name='In:', editable=False)
         self.neighbours = self.add(npyscreen.TitleText, name='Adjacent:', editable=False)
         self.nextrely += 1
         self.description = self.add(npyscreen.Pager, max_height=3, editable=False)
@@ -142,12 +139,18 @@ time.sleep(1)
 while True:  # główny wątek nasłuchuje wiadomości odświeżających od serwera (i wyświetla co trzeba)
 
     message = clientSocket.recv(4096).decode()
-    myApp.getForm('MAIN').mainPager.values.append("something happens... {}".format(message))
+
     message = message.split("\t")
-    myApp.getForm('MAIN').mainPager.h_scroll_line_down(None)  # scroll down one line
+
     myApp.getForm('MAIN').location.value = message[0]
     myApp.getForm('MAIN').neighbours.value = message[1]
-    myApp.getForm('MAIN').description.values = [message[2]]
+    myApp.getForm('MAIN').characters.value = message[2]
+    myApp.getForm('MAIN').description.values = [message[3]]
+
+    for i in message[4:]:
+        if i != "":
+            myApp.getForm('MAIN').mainPager.values.append(i)
+            myApp.getForm('MAIN').mainPager.h_scroll_line_down(None)  # scroll down one line
 
     myApp.getForm('MAIN').display()  # refresh display
 

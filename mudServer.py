@@ -31,6 +31,9 @@ class Character:
         self.location = location
         self.hp = hp
         self.cid = Character.cid_counter  # character id
+        self.log = ""
+        self.busy = False
+        self.location.characters.append(self)
         Character.cid_counter += 1
 
 
@@ -67,20 +70,33 @@ class Player(Character):
             pass'''
 
     def move(self, command):
-        location = command[0]
-        for i in range(1, len(command)):
-            location = location + " " + command[i]
+        destination = listToString(command)
 
-        print("you moved from {}".format(self.location.name))
-        if location in self.location.neighbours:
-            self.location.characters.remove(self.cid)
-            self.location = get_location(location)
-            self.location.characters.append(self.cid)
-            print("you moved to {}".format(self.location.name))
+        if destination in self.location.neighbours:
+            log = "{} moves from {} to {}\t".format(self.login, self.location.name, destination)
+            self.location.log += log
+            self.location.characters.remove(self)
+            self.location = get_location(destination)
+            self.location.characters.append(self)
+            self.location.log += log
         else:
+            self.log += "It's impossible!\t"
             print('{}, {}, {}'.format(self.login, self.location.name, self.location.neighbours))
 
-    command_dict = {"move": move}
+    def shout(self, command):
+        text = listToString(command)
+        self.location.log += "{} shouts: '{}' at {}\t".format(self.login, text, self.location.name)
+
+    def say(self, command):
+        target = playerList.get_player(command[0])
+        if target in self.location.characters:
+            text = listToString(command[1:])
+            self.log += "You say to {}: '{}'\t".format(target.login, text)
+            target.log += "{} says to you: '{}'\t".format(self.login, text)
+        else:
+            self.log += "It's impossible!\t"
+
+
 
 
 class Npc(Character):
@@ -94,6 +110,7 @@ class Location:
         self.neighbours = neighbours
         self.objects = []
         self.characters = []
+        self.log = ""
 
 
 class Thing:
@@ -120,7 +137,11 @@ def get_location(name):
         if i.name == name:
             return i
 
-
+def listToString(command):
+    text = command[0]
+    for i in range(1, len(command)):
+        text = text + " " + command[i]
+    return text
 
 #--------------networking section here---------------------
 
@@ -146,7 +167,7 @@ class ClientThread(threading.Thread):
         password = register_data[1]
         # TODO: verify whether login not used before
         new_player = Player(login, password, random.choice(locationList), 10)
-        new_player.location.characters.append(new_player.cid)
+        new_player.location.characters.append(new_player)
         playerList.append(new_player)
         self.bind_player(new_player)
         self.conn.sendall(b"0")  # player successfully created
@@ -186,9 +207,16 @@ class ClientThread(threading.Thread):
             for i in self.player.location.neighbours:
                 neighbours = neighbours + " " + i
 
-            message = "{}\t{}\t{}".format(self.player.location.name,
-                                          neighbours,
-                                          self.player.location.description)
+            characters = ""
+            for i in self.player.location.characters:
+                characters = characters + " " + i.login
+
+            message = "{}\t{}\t{}\t{}\t{}\t{}".format(self.player.location.name,
+                                              neighbours,
+                                              characters,
+                                              self.player.location.description,
+                                              self.player.location.log,
+                                              self.player.log)
 
             self.conn.sendall(message.encode())
             time.sleep(2)
@@ -237,6 +265,7 @@ class ListenForSecondConn(threading.Thread):
             new_thread2.start()
             threads2.append(new_thread2)
 
+
 class ApplyCommands(threading.Thread):
 
     def run(self):
@@ -254,13 +283,18 @@ class ApplyCommands(threading.Thread):
                     a = getattr(player, command[1])  # find player's method corresponding to command
                     a(command[2:])  # remember - arguments are sent as list - even if only one is left!
                 except:
-                    print("invalid command!")
+                    player.log += "It's impossible!\t"
             commandList = []
 
             addCommands.set()
             sendData.set()
             time.sleep(1)
             sendData.clear()
+            for location in locationList:
+                location.log = ""
+
+            for pl in playerList:
+                pl.log = ""
 
             time.sleep(4)
 
@@ -270,26 +304,35 @@ class ApplyCommands(threading.Thread):
 
 #-----------------main code here--------------------------------------
 
-playerList = PlayerList()
+
 
 locations = open("locations.csv").readlines()  # load csv file with locations (tab used as separator!)
 for i in range(len(locations)):
     locations[i] = locations[i].replace("\n", "")
     locations[i] = locations[i].split("\t")
     locations[i][2] = locations[i][2].split(",")
-
 locationList = []
-
 for location in locations:
     locationList.append(Location(location[0], location[1], location[2]))
 
 
+players = open("players.csv").readlines()
+for i in range(len(players)):
+    players[i] = players[i].replace("\n", "")
+    players[i] = players[i].split("\t")
+playerList = PlayerList()
+for i in range(len(players)):
+    if players[i][2] == "random":
+        players[i][2] = random.choice(locationList)
+    else:
+        players[i][2] = get_location(players[i][2])
+    playerList.append(Player(*players[i]))
+
+
 jon = Player("potWilk", "1234", random.choice(locationList), 14)
 playerList.append(jon)
-jon.location.characters.append(jon.cid) # trza to ogarnąć lepiej
 clare = Player("ccl23", "5678", random.choice(locationList), 10)
 playerList.append(clare)
-clare.location.characters.append(clare.cid)
 
 commandList = []
 

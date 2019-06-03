@@ -1,2 +1,7 @@
 old forest	It's dark and spooky over here. Trees are whispering some weird things.	path
 path	The path looks old and forgotten.	old forest
+main street	You are on the City's main street. Crowd is moving all around.	narrow street,corner shop,town hall
+corner shop	You enter a cosy corner shop. A fireplace is burning and the shopkeeper is waddling around.	main street,narrow street
+narrow street	You walk down a nasty narrow street. Everything here is wet and ugly.	main street,corner shop,sewers
+town hall	You enter the town hall. The interior looks stunning. Everyone is staring at you. You feel that you shouldn't be here. 	main street
+sewers	Sewers are a really wet place. It is quiet and empy here. Only rats are looking at you.	narrow street
