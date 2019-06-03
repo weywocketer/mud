@@ -211,7 +211,7 @@ class ClientCommandsThread(threading.Thread):
 class ListenForSecondConn(threading.Thread):
     def run(self):
         server_ip2 = '127.0.0.1'
-        server_port2 = 2005
+        server_port2 = server_port + 1
 
         server2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # server2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -237,10 +237,10 @@ class ApplyCommands(threading.Thread):
             print("Parsing commands...")
             for i in range(len(commandList)):  # new commands should not be added when this for is running!
                 print("command {}. is being analysed... ".format(i))
-                command = commandList[i].split()
-                player = playerList.get_player(command[0])
 
                 try:
+                    command = commandList[i].split()
+                    player = playerList.get_player(command[0])
                     a = getattr(player, command[1])  # find player's method corresponding to command
                     a(command[2:])  # remember - arguments are sent as list - even if only one is left!
                 except:
@@ -302,9 +302,6 @@ commandList = []
 addCommands = threading.Event()  # used to ensure that new commands won't be added to list during commands' analysis
 sendData = threading.Event() # used to synchronize sending of updates to clients
 
-ListenForSecondConn().start()
-ApplyCommands().start()
-
 server_ip = '127.0.0.1'
 server_port = 2004
 #BUFFER_SIZE = 20  # Usually 1024, but we need quick response
@@ -315,14 +312,26 @@ tcpServer.bind((server_ip, server_port))
 threads = []
 tcpServer.listen(4)
 
-while True:
+ListenForSecondConn().start()
+ApplyCommands().start()
 
-    print("Waiting for connections from TCP clients...")
-    (conn, (ip, port)) = tcpServer.accept()
-    new_thread = ClientThread(ip, port, conn)
-    new_thread.start()
+try:
+    while True:
 
-    
-    threads.append(new_thread)
-    for player in playerList:
-        print(player.login)
+        print("Waiting for connections from TCP clients...")
+        (conn, (ip, port)) = tcpServer.accept()
+        new_thread = ClientThread(ip, port, conn)
+        new_thread.start()
+
+
+        threads.append(new_thread)
+        for player in playerList:
+            print(player.login)
+
+except KeyboardInterrupt:
+    tcpServer.close()
+    #sys.exit()
+
+finally:
+    tcpServer.close()
+    #sys.exit()
