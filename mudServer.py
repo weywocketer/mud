@@ -5,69 +5,31 @@ Created on Sat Apr 27 10:23:11 2019
 
 @author: weywocketer
 """
-import unidecode
+
 import threading
 import random
 import time
 import socket
 
 
-def unpolish(word):
-    """
-    replace polish symbols with universal ones and go lowercase
-    """
-
-    word = word.lower()
-    word = unidecode.unidecode(word)  # remove accents
-    return word
-
-
 class Character:
-    cid_counter = 0
 
     def __init__(self, login, password, location, hp):
         self.login = login
         self.password = password
         self.location = location
         self.hp = hp
-        self.cid = Character.cid_counter  # character id
         self.log = ""
         self.busy = False
-        self.location.characters.append(self)
-        Character.cid_counter += 1
+        if self.location != None:  # None location possible - ClientThread is initially bound to player with None location
+            self.location.characters.append(self)
+
 
 
 class Player(Character):
 
     def __init__(self, login, password, location, hp):
         super().__init__(login, password, location, hp)
-
-    def do_command(self):
-        pass
-
-        '''print(self.location.description)  # (client)
-
-        command = unpolish(input("Co robisz? ")).split()
-        if command[0] == "idz":
-            if command[1] in self.location.neighbours:
-                self.location.characters.remove(self.cid)  # server
-                self.location = get_location(command[1])
-                self.location.characters.append(self.cid)
-            else:
-                print("To niemożliwe!")
-        elif command[0] == "uzyj":
-            print("użyto")
-            pass
-        elif command[0] == "patrz":
-            pass
-        elif command[0] == "rozmawiaj":
-            pass
-        elif command[0] == "zaatakuj":
-            pass
-        elif command[0] == "wez":
-            pass
-        elif command[0] == "":
-            pass'''
 
     def move(self, command):
         destination = listToString(command)
@@ -167,7 +129,6 @@ class ClientThread(threading.Thread):
         password = register_data[1]
         # TODO: verify whether login not used before
         new_player = Player(login, password, random.choice(locationList), 10)
-        new_player.location.characters.append(new_player)
         playerList.append(new_player)
         self.bind_player(new_player)
         self.conn.sendall(b"0")  # player successfully created
@@ -328,11 +289,12 @@ for i in range(len(players)):
         players[i][2] = get_location(players[i][2])
     playerList.append(Player(*players[i]))
 
-
+'''
 jon = Player("potWilk", "1234", random.choice(locationList), 14)
 playerList.append(jon)
 clare = Player("ccl23", "5678", random.choice(locationList), 10)
 playerList.append(clare)
+'''
 
 commandList = []
 
@@ -345,7 +307,7 @@ ApplyCommands().start()
 
 server_ip = '127.0.0.1'
 server_port = 2004
-BUFFER_SIZE = 20  # Usually 1024, but we need quick response
+#BUFFER_SIZE = 20  # Usually 1024, but we need quick response
 
 tcpServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

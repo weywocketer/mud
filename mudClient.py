@@ -136,7 +136,7 @@ time.sleep(1)
 #CommandsThread().start()  # tu tworzy się drugi wątek (do wysyłania komend)
 
 
-while True:  # główny wątek nasłuchuje wiadomości odświeżających od serwera (i wyświetla co trzeba)
+while True:  # main thread listens for updates from server and displays them
 
     message = clientSocket.recv(4096).decode()
 
