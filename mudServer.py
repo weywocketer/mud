@@ -10,7 +10,7 @@ import threading
 import random
 import time
 import socket
-
+import sys
 
 class Character:
 
@@ -330,8 +330,8 @@ try:
 
 except KeyboardInterrupt:
     tcpServer.close()
-    #sys.exit()
+    sys.exit()
 
 finally:
     tcpServer.close()
-    #sys.exit()
+    sys.exit()
