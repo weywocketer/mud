@@ -166,11 +166,11 @@ class ClientThread(threading.Thread):
 
             neighbours = ""
             for i in self.player.location.neighbours:
-                neighbours = neighbours + " " + i
+                neighbours = neighbours + i + ", "
 
             characters = ""
             for i in self.player.location.characters:
-                characters = characters + " " + i.login
+                characters = characters  + i.login + ", "
 
             message = "{}\t{}\t{}\t{}\t{}\t{}".format(self.player.location.name,
                                               neighbours,

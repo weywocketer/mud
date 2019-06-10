@@ -33,10 +33,10 @@ class LoggingScreen(MyFormBaseNew):
         self.nextrely += 1
         self.mainPager = self.add(npyscreen.Pager, max_height=30,
                                values=["Welcome to MUD Mud v0.1. It's great to see you! Have fun.",
-                                       "Connecting to the server..."], editable=False)
+                                       "Connecting to the server...", "Done."], editable=False)
         self.nextrely += 1
         self.location = self.add(npyscreen.TitleText, name='Location:', editable=False)
-        self.characters = self.add(npyscreen.TitleText, name='In:', editable=False)
+        self.characters = self.add(npyscreen.TitleText, name='Players:', editable=False)
         self.neighbours = self.add(npyscreen.TitleText, name='Adjacent:', editable=False)
         self.nextrely += 1
         self.description = self.add(npyscreen.Pager, max_height=3, editable=False)
