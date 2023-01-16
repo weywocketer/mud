@@ -1,4 +1,4 @@
-# mud
+# Multi-User Dungeon game prototype for the High-level Programming Languages class
 
 Repository contains .pdf file with presentation (in Polish) describing the base concepts of the project.
 
